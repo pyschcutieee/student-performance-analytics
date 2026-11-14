@@ -1,56 +1,125 @@
 # Student Performance Analytics & Early Academic Risk Detection
 
-## About the Project
+An end-to-end Data Analytics and Machine Learning project that analyzes student academic performance, identifies performance patterns, and predicts student risk categories using machine learning.
 
-This project analyzes student performance data using Python and R to identify academic trends and detect students who may be at risk of poor academic performance.
+## Project Objectives
 
-It combines data preprocessing, exploratory data analysis, statistical testing, machine learning, and visualization to support data-driven academic insights.
+- Analyze student academic performance.
+- Identify factors associated with final grades.
+- Perform exploratory data analysis and statistical analysis.
+- Group students using clustering techniques.
+- Predict academic risk using machine learning.
+- Visualize insights through an interactive Streamlit dashboard.
 
-## Objectives
+## Technologies Used
 
-- Analyze student performance and related factors.
-- Identify patterns associated with final grades.
-- Explore relationships between absences and academic outcomes.
-- Build machine learning models to predict final performance.
-- Identify groups of students with similar performance patterns.
-- Present findings through a dashboard and statistical analysis.
-
-## Tech Stack
-
-- **Python:** Pandas, NumPy, Matplotlib, Seaborn, Scikit-learn
-- **R:** Statistical analysis and hypothesis testing
-- **Dashboard:** Streamlit
-- **Tools:** Git, GitHub, Jupyter Notebook / VS Code
+- **Programming:** Python, R
+- **Data Analysis:** Pandas, NumPy
+- **Visualization:** Matplotlib, Seaborn, Streamlit
+- **Machine Learning:** Scikit-learn
+- **Statistical Analysis:** R, SciPy
+- **Development:** Jupyter Notebook, VS Code, Git, GitHub
 
 ## Dataset
 
-We plan to use the UCI Student Performance dataset, which contains student achievement and demographic information.
+UCI Student Performance Dataset.
 
-Source: https://archive.ics.uci.edu/dataset/320/student-performance
+The project uses the Mathematics student dataset (`student-mat.csv`).
 
-## Planned Features
+## Project Structure
 
-- Data cleaning and preprocessing
-- Exploratory data analysis and visualizations
-- Correlation analysis and statistical tests
-- Machine learning for performance prediction
-- Student performance grouping using clustering
-- Early academic risk indicators
-- Interactive Streamlit dashboard
+```text
+student-performance-analytics/
+│
+├── dashboard/
+│   ├── app.py
+│   └── student_risk_model.pkl
+│
+├── data/
+│   ├── raw/
+│   │   └── student-mat.csv
+│   └── processed/
+│
+├── notebooks/
+│   ├── 01_exploratory_data_analysis.ipynb
+│   ├── 02_statistical_analysis.ipynb
+│   └── 03_performance_prediction.ipynb
+│
+├── reports/
+│
+├── src/
+│   ├── check_dataset.py
+│   └── statistical_analysis.R
+│
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
 
-## Project Status
+## Machine Learning Models
 
-**In Progress** — implementation, testing, and evaluation are ongoing.
+The project compares:
+
+1. Logistic Regression
+2. Random Forest Classifier
+
+The models classify students into three categories:
+
+- **High Risk:** Final grade below 10
+- **Medium Risk:** Final grade from 10 to 14
+- **Low Risk:** Final grade 15 or above
+
+Model performance is evaluated using accuracy, macro F1-score, classification reports, and a confusion matrix.
+
+Note: The current prediction model uses G1 and G2 grades, so it estimates final academic risk after the second-period grades are available.
+
+## Dashboard Features
+
+- Total student count
+- Average final grade
+- Student risk distribution
+- Grade distribution
+- Individual student risk prediction
+- Study-time and academic performance analysis
+- Absences versus final grade visualization
+
+## How to Run the Project
+
+### 1. Clone Repository
+
+```bash
+git clone YOUR_GITHUB_REPOSITORY_URL
+cd student-performance-analytics
+```
+
+### 2. Create Virtual Environment
+
+```bash
+python -m venv .venv
+```
+
+### 3. Activate Environment (Windows)
+
+```bash
+.venv\Scripts\activate
+```
+
+### 4. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Run Dashboard
+
+```bash
+streamlit run dashboard/app.py
+```
+
+## Project Outcome
+
+An interactive academic analytics system combining data analysis, statistical techniques, machine learning, and visualization to support student performance monitoring and risk assessment.
 
 ## Disclaimer
 
-The analysis is intended for educational and research purposes. Risk indicators should support, not replace, educators' judgment.
-
-## Author
-
-Muskan
-Vidushi
-
-## License
-
-License not yet selected.
+This project is developed for educational and analytical purposes. Predictions are estimates based on historical dataset patterns and should not be treated as definitive judgments about individual students.
