@@ -321,77 +321,43 @@ with tab2:
                 )
 
             # Create DataFrame with exact feature order.
-
             input_data = pd.DataFrame(
                 [student],
                 columns=expected_features
             )
 
             # Predict risk category.
-
-            prediction = str(
-                model.predict(input_data)[0]
-            )
+            prediction = str(model.predict(input_data)[0]).strip()
 
             st.divider()
-
             st.subheader("Prediction Result")
 
-            if prediction == "High":
-
-                st.error(
-                    "⚠️ HIGH RISK: "
-                    "Student may require additional academic support."
-                )
-
-            elif prediction == "Medium":
-
-                st.warning(
-                    "🟡 MEDIUM RISK: "
-                    "Student performance should be monitored."
-                )
-
-            elif prediction == "Low":
-
+            if prediction in ["High", "High Risk"]:
+                st.error("🔴 HIGH RISK: Student may require additional academic support.")
+            elif prediction in ["Medium", "Medium Risk"]:
+                st.warning("🟡 MEDIUM RISK: Student performance should be monitored.")
+            elif prediction in ["Low", "Low Risk"]:
                 st.success(
-                    "🟢 LOW RISK: "
-                    "Student is currently in the low-risk category."
+                    "🟢 LOW RISK: Student is currently in the low-risk category."
                 )
-
             else:
-
-                st.warning(
-                    f"Unexpected prediction category: {prediction}"
-                )
-
-            st.info(
-                f"Predicted Risk Category: {prediction}"
-            )
+                st.warning(f"Unknown prediction category: {prediction}")
+                st.info(f"Predicted Risk Category: {prediction}")
 
             # ==================================
             # PREDICTION PROBABILITIES
             # ==================================
-
             if hasattr(model, "predict_proba"):
 
-                probabilities = model.predict_proba(
-                    input_data
-                )[0]
+                probabilities = model.predict_proba(input_data)[0]
 
                 if hasattr(model, "classes_"):
-
                     classes = model.classes_
-
                 else:
-
                     classes = None
 
                     if hasattr(model, "named_steps"):
-
-                        for step in reversed(
-                            list(model.named_steps.values())
-                        ):
-
+                        for step in reversed(list(model.named_steps.values())):
                             if hasattr(step, "classes_"):
                                 classes = step.classes_
                                 break
@@ -406,10 +372,7 @@ with tab2:
                     "Probability": probabilities
                 }).set_index("Risk Category")
 
-                st.subheader(
-                    "Prediction Probability Distribution"
-                )
-
+                st.subheader("Prediction Probability Distribution")
                 st.bar_chart(probability_df)
 
                 st.caption(
