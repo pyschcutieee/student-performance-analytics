@@ -3,14 +3,14 @@ import pandas as pd
 import joblib
 from pathlib import Path
 
-# ---------------- PATHS ----------------
+# ==========================================
+# 1. PATHS AND PAGE CONFIGURATION
+# ==========================================
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 
 MODEL_PATH = BASE_DIR / "dashboard" / "student_risk_model_v2.pkl"
 DATA_PATH = BASE_DIR / "data" / "raw" / "student_performance_cleaned.csv"
-
-# ---------------- PAGE SETUP ----------------
 
 st.set_page_config(
     page_title="Student Performance Analytics",
@@ -18,11 +18,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- LOAD MODEL & DATA ----------------
+
+# ==========================================
+# 2. LOAD MODEL AND DATASET
+# ==========================================
 
 @st.cache_resource
 def load_model():
     return joblib.load(MODEL_PATH)
+
 
 @st.cache_data
 def load_data():
@@ -30,25 +34,58 @@ def load_data():
     data.columns = data.columns.str.strip()
     return data
 
+
 try:
     model = load_model()
     df = load_data()
+
 except Exception as e:
-    st.error("Model or dataset could not be loaded.")
+    st.error("Failed to load model or dataset.")
     st.exception(e)
     st.stop()
 
+
 required_columns = {
-    "G3", "risk_level", "studytime", "failures", "absentees"
+    "G3",
+    "risk_level",
+    "studytime",
+    "failures",
+    "absentees"
 }
 
 missing_columns = required_columns - set(df.columns)
 
 if missing_columns:
-    st.error(f"Missing dataset columns: {sorted(missing_columns)}")
+    st.error(
+        f"Missing dataset columns: {sorted(missing_columns)}"
+    )
     st.stop()
 
-# ---------------- HEADER ----------------
+
+# ==========================================
+# 3. MODEL FEATURE VALIDATION
+# ==========================================
+
+def get_expected_features(trained_model):
+
+    if hasattr(trained_model, "feature_names_in_"):
+        return list(trained_model.feature_names_in_)
+
+    if hasattr(trained_model, "named_steps"):
+
+        for step in trained_model.named_steps.values():
+
+            if hasattr(step, "feature_names_in_"):
+                return list(step.feature_names_in_)
+
+    raise ValueError(
+        "The trained model does not expose its input feature names."
+    )
+
+
+# ==========================================
+# 4. HEADER
+# ==========================================
 
 st.title("🎓 Student Performance Analytics")
 
@@ -57,13 +94,17 @@ st.write(
 )
 
 st.caption(
-    "Predictions use G1 and G2 grades, so they apply "
-    "after second-period grades are available."
+    "Predictions use first-period and second-period grades. "
+    "They are intended for academic risk estimation after "
+    "G2 grades are available."
 )
 
 st.divider()
 
-# ---------------- NAVIGATION ----------------
+
+# ==========================================
+# 5. NAVIGATION
+# ==========================================
 
 tab1, tab2, tab3 = st.tabs([
     "📊 Dashboard Overview",
@@ -71,7 +112,10 @@ tab1, tab2, tab3 = st.tabs([
     "📈 Academic Insights"
 ])
 
-# ================= TAB 1 =================
+
+# ==========================================
+# TAB 1: DASHBOARD OVERVIEW
+# ==========================================
 
 with tab1:
 
@@ -79,7 +123,10 @@ with tab1:
 
     c1, c2, c3, c4 = st.columns(4)
 
-    c1.metric("Total Students", len(df))
+    c1.metric(
+        "Total Students",
+        len(df)
+    )
 
     c2.metric(
         "Average Final Grade",
@@ -101,17 +148,22 @@ with tab1:
     left, right = st.columns(2)
 
     with left:
+
         st.subheader("Student Risk Distribution")
 
         risk_counts = (
             df["risk_level"]
             .value_counts()
-            .reindex(["High", "Medium", "Low"], fill_value=0)
+            .reindex(
+                ["High", "Medium", "Low"],
+                fill_value=0
+            )
         )
 
         st.bar_chart(risk_counts)
 
     with right:
+
         st.subheader("Final Grade Distribution")
 
         grade_counts = (
@@ -129,58 +181,93 @@ with tab1:
         use_container_width=True
     )
 
-# ================= TAB 2 =================
+
+# ==========================================
+# TAB 2: STUDENT RISK PREDICTION
+# ==========================================
 
 with tab2:
 
     st.subheader("Predict Individual Student Risk")
 
     st.write(
-        "Enter student information to estimate academic risk."
+        "Enter student details to estimate academic risk."
     )
 
     with st.form("prediction_form"):
 
         c1, c2, c3 = st.columns(3)
 
-        with c1:
-            gender = st.selectbox("Gender", ["F", "M"])
-            age = st.slider("Age", 15, 22, 17)
-            address = st.selectbox("Address", ["U", "R"])
+        # COLUMN 1
 
-        with c2:
+        with c1:
+
+            age = st.slider(
+                "Age",
+                min_value=15,
+                max_value=22,
+                value=17
+            )
+
             studytime = st.selectbox(
                 "Weekly Study Time",
-                [1, 2, 3, 4]
+                options=[1, 2, 3, 4]
             )
 
             failures = st.selectbox(
                 "Past Failures",
-                [0, 1, 2, 3]
+                options=[0, 1, 2, 3]
             )
 
+        # COLUMN 2
+
+        with c2:
+
             absentees = st.number_input(
-                "Absences",
+                "Absentees",
                 min_value=0,
                 max_value=100,
                 value=2,
                 step=1
             )
 
+            goout = st.slider(
+                "Going Out Frequency",
+                min_value=1,
+                max_value=5,
+                value=3
+            )
+
+            freetime = st.slider(
+                "Free Time",
+                min_value=1,
+                max_value=5,
+                value=3
+            )
+
+        # COLUMN 3
+
         with c3:
+
             G1 = st.slider(
                 "First Period Grade (G1)",
-                0, 20, 10
+                min_value=0,
+                max_value=20,
+                value=10
             )
 
             G2 = st.slider(
                 "Second Period Grade (G2)",
-                0, 20, 10
+                min_value=0,
+                max_value=20,
+                value=10
             )
 
             health = st.slider(
                 "Health Status",
-                1, 5, 3
+                min_value=1,
+                max_value=5,
+                value=3
             )
 
         submitted = st.form_submit_button(
@@ -188,72 +275,59 @@ with tab2:
             type="primary"
         )
 
+    # ======================================
+    # PREDICTION LOGIC
+    # ======================================
+
     if submitted:
 
-        student = {
-            "gender": gender,
-            "age": age,
-            "address": address,
-            "G1": G1,
-            "G2": G2,
-            "health": health,
-            "studytime": studytime,
-            "failures": failures,
-            "absentees": int(absentees)
-        }
-
         try:
-            # Get exact feature order used during training
 
-            if hasattr(model, "feature_names_in_"):
-                expected_features = list(
-                    model.feature_names_in_
-                )
+            # Match exact features used in training.
+            # The model expects "absences".
+            # The cleaned dataset uses "absentees".
 
-            elif (
-                hasattr(model, "named_steps")
-                and "preprocessor" in model.named_steps
-                and hasattr(
-                    model.named_steps["preprocessor"],
-                    "feature_names_in_"
-                )
-            ):
-                expected_features = list(
-                    model.named_steps[
-                        "preprocessor"
-                    ].feature_names_in_
-                )
+            student = {
+                "age": age,
+                "studytime": studytime,
+                "failures": failures,
+                "absences": int(absentees),
+                "G1": G1,
+                "G2": G2,
+                "goout": goout,
+                "health": health,
+                "freetime": freetime
+            }
 
-            else:
-                raise ValueError(
-                    "Training feature names not found in model."
-                )
-
-            # Validate feature names
+            expected_features = get_expected_features(model)
 
             missing_features = [
-                col for col in expected_features
-                if col not in student
+                feature
+                for feature in expected_features
+                if feature not in student
             ]
 
             extra_features = [
-                col for col in student
-                if col not in expected_features
+                feature
+                for feature in student
+                if feature not in expected_features
             ]
 
             if missing_features or extra_features:
+
                 raise ValueError(
-                    f"Missing features: {missing_features}; "
-                    f"Unexpected features: {extra_features}"
+                    f"Missing features: {missing_features}. "
+                    f"Unexpected features: {extra_features}."
                 )
 
-            # IMPORTANT FIX:
-            # Match model's exact training feature order
+            # Create DataFrame with exact feature order.
 
             input_data = pd.DataFrame(
                 [student],
                 columns=expected_features
             )
+
+            # Predict risk category.
 
             prediction = str(
                 model.predict(input_data)[0]
@@ -264,32 +338,39 @@ with tab2:
             st.subheader("Prediction Result")
 
             if prediction == "High":
+
                 st.error(
-                    "⚠️ High Risk: Academic support may be needed."
+                    "⚠️ HIGH RISK: "
+                    "Student may require additional academic support."
                 )
 
             elif prediction == "Medium":
+
                 st.warning(
-                    "🟡 Medium Risk: Student performance "
-                    "should be monitored."
+                    "🟡 MEDIUM RISK: "
+                    "Student performance should be monitored."
                 )
 
             elif prediction == "Low":
+
                 st.success(
-                    "🟢 Low Risk: Student is currently "
-                    "in the low-risk category."
+                    "🟢 LOW RISK: "
+                    "Student is currently in the low-risk category."
                 )
 
             else:
+
                 st.warning(
-                    f"Unexpected prediction: {prediction}"
+                    f"Unexpected prediction category: {prediction}"
                 )
 
             st.info(
-                f"Predicted Category: {prediction}"
+                f"Predicted Risk Category: {prediction}"
             )
 
-            # Show model probabilities
+            # ==================================
+            # PREDICTION PROBABILITIES
+            # ==================================
 
             if hasattr(model, "predict_proba"):
 
@@ -298,36 +379,57 @@ with tab2:
                 )[0]
 
                 if hasattr(model, "classes_"):
+
                     classes = model.classes_
+
                 else:
-                    classes = model.named_steps[
-                        "classifier"
-                    ].classes_
+
+                    classes = None
+
+                    if hasattr(model, "named_steps"):
+
+                        for step in reversed(
+                            list(model.named_steps.values())
+                        ):
+
+                            if hasattr(step, "classes_"):
+                                classes = step.classes_
+                                break
+
+                    if classes is None:
+                        raise ValueError(
+                            "Model class labels are unavailable."
+                        )
 
                 probability_df = pd.DataFrame({
                     "Risk Category": classes,
-                    "Model Probability": probabilities
+                    "Probability": probabilities
                 }).set_index("Risk Category")
 
                 st.subheader(
-                    "Model Probability by Category"
+                    "Prediction Probability Distribution"
                 )
 
                 st.bar_chart(probability_df)
 
                 st.caption(
-                    "These are model-estimated probabilities, "
-                    "not guaranteed real-world confidence."
+                    "Probabilities are model estimates and "
+                    "may not be perfectly calibrated."
                 )
 
         except Exception as e:
+
             st.error(
-                "Prediction failed. Please check model "
-                "features and dependencies."
+                "Prediction failed. Please check the "
+                "model features and configuration."
             )
+
             st.exception(e)
 
-# ================= TAB 3 =================
+
+# ==========================================
+# TAB 3: ACADEMIC INSIGHTS
+# ==========================================
 
 with tab3:
 
@@ -336,24 +438,28 @@ with tab3:
     c1, c2 = st.columns(2)
 
     with c1:
+
         st.write("**Average Grade by Study Time**")
 
         study_analysis = (
-            df.groupby("studytime")["G3"].mean()
+            df.groupby("studytime")["G3"]
+            .mean()
         )
 
         st.bar_chart(study_analysis)
 
     with c2:
+
         st.write("**Average Grade by Past Failures**")
 
         failure_analysis = (
-            df.groupby("failures")["G3"].mean()
+            df.groupby("failures")["G3"]
+            .mean()
         )
 
         st.bar_chart(failure_analysis)
 
-    st.write("**Absences vs Final Grade**")
+    st.write("**Absentees vs Final Grade**")
 
     st.scatter_chart(
         df,
@@ -363,7 +469,7 @@ with tab3:
 
     st.write("**Risk Category Summary**")
 
-    summary = (
+    risk_summary = (
         df["risk_level"]
         .value_counts()
         .rename_axis("Risk Level")
@@ -371,11 +477,14 @@ with tab3:
     )
 
     st.dataframe(
-        summary,
+        risk_summary,
         use_container_width=True
     )
 
-# ---------------- FOOTER ----------------
+
+# ==========================================
+# FOOTER
+# ==========================================
 
 st.divider()
 
