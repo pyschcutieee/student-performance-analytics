@@ -49,8 +49,8 @@ with tab1:
 
     c1.metric("Total Students", len(df))
     c2.metric("Average Final Grade", round(df["G3"].mean(), 2))
-    c3.metric("High Risk Students", int((df["risk_level"] == "High Risk").sum()))
-    c4.metric("Low Risk Students", int((df["risk_level"] == "Low Risk").sum()))
+    c3.metric("High Risk Students", int((df["risk_level"] == "High").sum()))
+    c4.metric("Low Risk Students", int((df["risk_level"] == "Low").sum()))
 
     st.divider()
 
