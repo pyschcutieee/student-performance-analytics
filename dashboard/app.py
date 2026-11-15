@@ -6,8 +6,8 @@ from pathlib import Path
 
 # Paths
 BASE_DIR = Path(__file__).resolve().parents[1]
-MODEL_PATH = BASE_DIR / "dashboard" / "student_risk_model.pkl"
-DATA_PATH = BASE_DIR / "data" / "raw" / "student-mat.csv"
+MODEL_PATH = BASE_DIR / "dashboard" / "student_risk_model_v2.pkl"
+DATA_PATH = BASE_DIR / "data" / "raw" / "student_performance_cleaned.csv"
 
 # Page setup
 st.set_page_config(
@@ -22,12 +22,8 @@ def load_model():
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv(DATA_PATH, sep=";")
-    df["risk_level"] = df["G3"].apply(
-        lambda x: "High Risk" if x < 10
-        else "Medium Risk" if x < 15
-        else "Low Risk"
-    )
+    df = pd.read_csv(DATA_PATH)
+    df.columns = df.columns.str.strip()
     return df
 
 model = load_model()
@@ -78,54 +74,59 @@ with tab2:
     st.subheader("Predict Individual Student Risk")
     st.write("Enter student information to estimate academic risk.")
 
+    
     with st.form("prediction_form"):
         c1, c2, c3 = st.columns(3)
 
         with c1:
+            gender = st.selectbox("Gender", ["F", "M"])
             age = st.slider("Age", 15, 22, 17)
-            studytime = st.selectbox("Weekly Study Time", [1, 2, 3, 4])
-            failures = st.selectbox("Past Failures", [0, 1, 2, 3])
+            address = st.selectbox("Address", ["U", "R"])
 
         with c2:
-            absences = st.number_input("Absences", 0, 100, 2)
-            G1 = st.slider("First Period Grade", 0, 20, 10)
-            G2 = st.slider("Second Period Grade", 0, 20, 10)
+            studytime = st.selectbox("Weekly Study Time", [1, 2, 3, 4])
+            failures = st.selectbox("Past Failures", [0, 1, 2, 3])
+            absentees = st.number_input(
+                "Absences", min_value=0, max_value=100, value=2
+            )
 
         with c3:
-            goout = st.slider("Going Out Frequency", 1, 5, 3)
+            G1 = st.slider("First Period Grade (G1)", 0, 20, 10)
+            G2 = st.slider("Second Period Grade (G2)", 0, 20, 10)
             health = st.slider("Health Status", 1, 5, 3)
-            freetime = st.slider("Free Time", 1, 5, 3)
 
         submitted = st.form_submit_button(
             "Predict Student Risk",
             type="primary"
         )
 
+
     if submitted:
+        
         input_data = pd.DataFrame([{
+            "gender": gender,
             "age": age,
-            "studytime": studytime,
-            "failures": failures,
-            "absences": absences,
+            "address": address,
             "G1": G1,
             "G2": G2,
-            "goout": goout,
             "health": health,
-            "freetime": freetime
+            "studytime": studytime,
+            "failures": failures,
+            "absentees": absentees
         }])
+
 
         prediction = model.predict(input_data)[0]
 
         st.divider()
         st.subheader("Prediction Result")
 
-        if prediction == "High Risk":
+        if prediction == "High":
             st.error("⚠️ High Risk: Academic support may be needed.")
-        elif prediction == "Medium Risk":
+        elif prediction == "Medium":
             st.warning("🟡 Medium Risk: Student performance should be monitored.")
         else:
             st.success("🟢 Low Risk: Student is currently in the low-risk category.")
-
         st.info(f"Predicted Category: {prediction}")
 
 # TAB 3: INSIGHTS
@@ -145,7 +146,7 @@ with tab3:
         st.bar_chart(failure_analysis)
 
     st.write("**Absences vs Final Grade**")
-    st.scatter_chart(df, x="absences", y="G3")
+    st.scatter_chart(df, x="absentees", y="G3")
 
     st.write("**Risk Category Summary**")
     st.dataframe(
