@@ -1,9 +1,7 @@
 import pandas as pd
 
-# Load student mathematics dataset
 data = pd.read_csv("data/raw/student-mat.csv", sep=";")
 
-# Display basic information
 print("STUDENT PERFORMANCE DATASET")
 print("----------------------------")
 

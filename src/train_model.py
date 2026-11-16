@@ -1,4 +1,3 @@
-
 import pandas as pd
 import joblib
 from pathlib import Path
@@ -10,15 +9,12 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 
-# Project paths
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_PATH = BASE_DIR / "data" / "raw" / "student_performance_cleaned.csv"
 MODEL_PATH = BASE_DIR / "dashboard" / "student_risk_model_v2.pkl"
 
-# Load cleaned dataset
 df = pd.read_csv(DATA_PATH)
 
-# Features used for prediction
 features = [
     "gender",
     "age",
@@ -34,7 +30,6 @@ features = [
 X = df[features]
 y = df["risk_level"]
 
-# Encode categorical columns
 categorical_features = ["gender", "address"]
 numeric_features = [
     "age", "G1", "G2", "health",
@@ -52,7 +47,6 @@ preprocessor = ColumnTransformer(
     ]
 )
 
-# Train/test split
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
@@ -61,7 +55,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-# Build pipeline
 model = Pipeline([
     ("preprocessor", preprocessor),
     ("classifier", RandomForestClassifier(
@@ -71,17 +64,14 @@ model = Pipeline([
     ))
 ])
 
-# Train model
 model.fit(X_train, y_train)
 
-# Evaluate model
 predictions = model.predict(X_test)
 
 print("Model Accuracy:", round(accuracy_score(y_test, predictions), 4))
 print("\nClassification Report:")
 print(classification_report(y_test, predictions, zero_division=0))
 
-# Save trained model
 joblib.dump(model, MODEL_PATH)
 
 print("\nModel trained successfully!")
